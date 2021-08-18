@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 		// Threads per CTA dimension
 		int THREADS = data[i];
 
-		myfile << N << ",";
+		myfile << THREADS << ",";
 
 		size_t bytes = N * N * sizeof(float);
 
