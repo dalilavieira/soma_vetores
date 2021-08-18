@@ -1,107 +1,113 @@
-const int SHMEM_SIZE = 4096;
-
-#include "include.h"
+#include<stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <fstream>
 
-int main(int argc, char* argv[]) { 
+using namespace std;
 
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, 0);
-    printf("device %d: %s \n", 0, deviceProp.name);
-    cudaSetDevice(0);
+float elapsed_time;
+cudaEvent_t start, stop;                             //# Declara dois eventos
+
+void time_start(){
+  cudaEventCreate(&start);                          //# Irá marcar o inicio da execucao
+  cudaEventCreate(&stop);                           //# Irá  marcar o final da execucao
+  cudaEventRecord(start, 0);                        //# insere na fila 
+}
+
+void time_end() {
+  cudaEventRecord(stop, 0);                          //# insere na fila
+  cudaEventSynchronize(stop);                        //# espera terminar
+  cudaEventElapsedTime(&elapsed_time, start, stop);  //# calcula
+}
+
+void host_add(float *a, float *b, float *c) {
+	for(int idx=0;idx<N;idx++)
+		c[idx] = a[idx] + b[idx];
+}
+
+__global__ void device_add(float *a, float *b, float *c) {
+
+	int index = threadIdx.x + blockIdx.x * blockDim.x;
+        c[index] = a[index] + b[index];
+}
+
+
+//basically just fills the array with index.
+void fill_array(float *data) {
+	for(int idx=0;idx<N;idx++)
+		data[idx] = idx;
+}
+
+
+void verify_output(float *a, float *b, float*c) {
+  int ok = 1;
+	for(int idx=0;idx<N;idx++)
+    if ( a[idx] + b[idx] != c[idx]) ok = 0;
+
+	if ( ok) printf("Soma de Vetores está correta !\n");
+}
+
+
+int main(void) {
+	float *a, *b, *c;
+  float *d_a, *d_b, *d_c; // device copies of a, b, c
+	int threads_per_block=0, no_of_blocks=0;
+
+	int size = N * sizeof(float);
+	
+	cudaDeviceProp deviceProp;
+	cudaGetDeviceProperties(&deviceProp, 0);
+	printf("device %d: %s \n", 0, deviceProp.name);
+	cudaSetDevice(0);
 
 	ofstream myfile;
 	myfile.open ("results_matrix.csv");
-	myfile << "size, Naive ,Tiled\n";
+	myfile << "size, kernell, all\n";
 	
 	for (int i = 0; i < data.size(); ++i) {
-	
-		//int N = data[i];
+
+		// Alloc space for host copies of a, b, c and setup input values
+		a = (float *)malloc(size); fill_array(a);
+		b = (float *)malloc(size); fill_array(b);
+		c = (float *)malloc(size);
+
+		// Alloc space for device copies of a, b, c
+		cudaMalloc((void **)&d_a, size);
+		cudaMalloc((void **)&d_b, size);
+		cudaMalloc((void **)&d_c, size);
+
+	       // Copy inputs to device
+		cudaMemcpy(d_a, a, size, cudaMemcpyHostToDevice);
+		cudaMemcpy(d_b, b, size, cudaMemcpyHostToDevice);
+
+		//threads_per_block = 512;
+		threads_per_block = data[i];
+		myfile << threads_per_block << ",";
 		
-		// Threads per CTA dimension
-		int THREADS = data[i];
-
-		myfile << THREADS << ",";
-
-		size_t bytes = N * N * sizeof(float);
-
-		printf("Ocupação tamanho da Matriz %ld\n", bytes);
-		
-		//float *h_cpu;
-		float *h_a, *h_b, *h_naive, *h_tiled;
-		float *d_a, *d_b, *d_naive, *d_tiled;
-		//float time_cpu;
-
-		h_a = (float*) malloc(bytes);
-		h_b = (float*) malloc(bytes);
-		//h_cpu = (float*) malloc(bytes);
-		h_naive = (float*) malloc(bytes);
-		h_tiled = (float*) malloc(bytes);
-
-		initDataRandom(h_a, N*N);
-		initDataRandom(h_b, N*N);
-		//memset(h_cpu, 0, bytes);
-		memset(h_naive, 0, bytes);
-		memset(h_tiled, 0, bytes);
-
-		cudaMalloc(&d_a, bytes);
-		cudaMalloc(&d_b, bytes);
-		cudaMalloc(&d_naive, bytes);
-		cudaMalloc(&d_tiled, bytes);
-
-		// Copy data to the device
-		cudaMemcpy(d_a, h_a, bytes, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_b, h_b, bytes, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_naive, h_naive, bytes, cudaMemcpyHostToDevice);
-		cudaMemcpy(d_tiled, h_tiled, bytes, cudaMemcpyHostToDevice);
-
-		// cpu execution
-		//time_clock = clock(); 
-		//cpu_mmatrix(h_cpu, h_a, h_b, N);
-		//time_clock = clock() - time_clock;
-		//time_cpu = 1000*((float)time_clock) / CLOCKS_PER_SEC;
-
-		// Blocks per grid dimension (assumes THREADS divides N evenly)
-		int BLOCKS = N / THREADS;
-
-		// Use dim3 structs for block  and grid dimensions
-		dim3 threads(THREADS, THREADS);
-		dim3 blocks(BLOCKS, BLOCKS);
-
-		//printf("Blocks: %d\nThreads/blocks: %d\nThreads(total): %d\n\n", BLOCKS, THREADS, THREADS*BLOCKS);
-
-		//printf("Time cpu:       %.2lf ms\n", time_cpu);
-
-		printf("Size: %d\n", THREADS);
-
-		//# Launch kernel Naive
 		time_start();
-		matrixMul_naive<<<blocks, threads>>>(d_naive, d_a, d_b, N);
-		cudaDeviceSynchronize();
+		no_of_blocks = N/threads_per_block;	
+		device_add<<<no_of_blocks,threads_per_block>>>(d_a,d_b,d_c);
 		time_end();
-		
-		cudaMemcpy(h_naive, d_naive, bytes, cudaMemcpyDeviceToHost);
+
 		printf("Time GPU naive: %7.2lf ms\n", elapsed_time);
-		myfile << elapsed_time << ",";
+		myfile << (elapsed_time * threads_per_block)/(no_of_blocks*pow(10,9)) << ",";
 
-		//# Launch kernel Tiled
-		time_start();
-		matrixMul_tiled<<<blocks, threads>>>(d_tiled, d_a, d_b, N);
-		cudaDeviceSynchronize();
+    float before = elapsed_time;
+
+    time_start();
+		// Copy result back to host
+		cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost);
 		time_end();
+		myfile << ((before+elapsed_time) * threads_per_block)/(no_of_blocks*pow(10,9)) << "\n";
 		
-		cudaMemcpy(h_tiled, d_tiled, bytes, cudaMemcpyDeviceToHost);
-		printf("Time GPU tiled: %7.2lf ms\n\n", elapsed_time);
-		myfile << elapsed_time << "\n";
+		verify_output(a,b,c);
 
-		//checkResults(h_cpu, h_naive, N*N);
-		//checkResults(h_cpu, h_tiled, N*N);
-		
-		//free(h_cpu);
-		free(h_tiled); free(h_naive); free(h_a); free(h_b); 
-    	cudaFree(d_naive); cudaFree(d_tiled); cudaFree(d_a); cudaFree(d_b); 
+		free(a); free(b); free(c);
+        	cudaFree(d_a); cudaFree(d_b); cudaFree(d_c);
+
 	}
-	myfile.close();
-	
-    return 0;
+  myfile.close();
+
+	return 0;
 }
+
