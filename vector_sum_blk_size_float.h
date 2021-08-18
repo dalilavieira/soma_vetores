@@ -16,7 +16,10 @@ int main(int argc, char* argv[]) {
 	
 	for (int i = 0; i < data.size(); ++i) {
 	
-		int N = data[i];
+		//int N = data[i];
+		
+		// Threads per CTA dimension
+		int THREADS = data[i];
 
 		myfile << N << ",";
 
@@ -57,9 +60,6 @@ int main(int argc, char* argv[]) {
 		//cpu_mmatrix(h_cpu, h_a, h_b, N);
 		//time_clock = clock() - time_clock;
 		//time_cpu = 1000*((float)time_clock) / CLOCKS_PER_SEC;
-
-		// Threads per CTA dimension
-		int THREADS = 32;
 
 		// Blocks per grid dimension (assumes THREADS divides N evenly)
 		int BLOCKS = N / THREADS;
