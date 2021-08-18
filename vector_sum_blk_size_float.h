@@ -63,6 +63,10 @@ int main(void) {
 	ofstream myfile;
 	myfile.open ("results_matrix.csv");
 	myfile << "size, kernell, all\n";
+
+  ofstream gpufile;
+	gpufile.open ("gpu.txt");
+  gpufile << deviceProp.name;
 	
 	for (int i = 0; i < data.size(); ++i) {
 
