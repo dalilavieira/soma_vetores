@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
 
 		//printf("Time cpu:       %.2lf ms\n", time_cpu);
 
-		printf("Size: %dx%d\n", N, N);
+		printf("Size: %d\n", THREADS);
 
 		//# Launch kernel Naive
 		time_start();
