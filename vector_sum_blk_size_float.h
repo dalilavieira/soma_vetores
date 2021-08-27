@@ -94,7 +94,8 @@ int main(void) {
 		time_end();
 
 		printf("Time GPU naive: %7.2lf ms\n", elapsed_time);
-		myfile << (elapsed_time * threads_per_block)/(no_of_blocks*pow(10,9)) << ",";
+		//myfile << (elapsed_time * threads_per_block)/(no_of_blocks*pow(10,9)) << ",";
+    myfile << (N * pow(10,3))/elapsed_time << ",";
 
     float before = elapsed_time;
 
@@ -102,7 +103,8 @@ int main(void) {
 		// Copy result back to host
 		cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost);
 		time_end();
-		myfile << ((before+elapsed_time) * threads_per_block)/(no_of_blocks*pow(10,9)) << "\n";
+		//myfile << ((before+elapsed_time) * threads_per_block)/(no_of_blocks*pow(10,9)) << "\n";
+    myfile << (N * pow(10,3))/(elapsed_time+before) << "\n";
 		
 		verify_output(a,b,c);
 
