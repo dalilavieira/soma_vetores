@@ -56,7 +56,7 @@ __global__ void reduceNeighbored (int *g_idata, int *g_odata, unsigned int n)
     // write result for this block to global mem
     if (tid == 0) g_odata[blockIdx.x] = idata[0];
 }
-
+/*
 // Neighbored Pair Implementation with less divergence
 __global__ void reduceNeighboredLess (int *g_idata, int *g_odata,
                                       unsigned int n)
@@ -88,7 +88,7 @@ __global__ void reduceNeighboredLess (int *g_idata, int *g_odata,
 
     // write result for this block to global mem
     if (tid == 0) g_odata[blockIdx.x] = idata[0];
-}
+}*/
 
 // Interleaved Pair Implementation with less divergence
 __global__ void reduceInterleaved (int *g_idata, int *g_odata, unsigned int n)
@@ -514,7 +514,7 @@ int main(int argc, char **argv)
            "%d>>>\n", iElaps, gpu_sum, grid.x, block.x);
 
     // kernel 2: reduceNeighbored with less divergence
-    CHECK(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
+    /*CHECK(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
     CHECK(cudaDeviceSynchronize());
     iStart = seconds();
     reduceNeighboredLess<<<grid, block>>>(d_idata, d_odata, size);
@@ -527,7 +527,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < grid.x; i++) gpu_sum += h_odata[i];
 
     printf("gpu Neighbored2 elapsed %f sec gpu_sum: %d <<<grid %d block "
-           "%d>>>\n", iElaps, gpu_sum, grid.x, block.x);
+           "%d>>>\n", iElaps, gpu_sum, grid.x, block.x);*/
 
     // kernel 3: reduceInterleaved
     CHECK(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
