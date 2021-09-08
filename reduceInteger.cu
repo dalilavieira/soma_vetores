@@ -227,6 +227,7 @@ __global__ void reduceUnrolling8 (int *g_idata, int *g_odata, unsigned int n)
     if (tid == 0) g_odata[blockIdx.x] = idata[0];
 }
 
+/*
 __global__ void reduceUnrollWarps8 (int *g_idata, int *g_odata, unsigned int n)
 {
     // set thread ID
@@ -439,6 +440,7 @@ __global__ void reduceUnrollWarps (int *g_idata, int *g_odata, unsigned int n)
 
     if (tid == 0) g_odata[blockIdx.x] = idata[0];
 }
+*/
 
 int main(int argc, char **argv)
 {
@@ -597,7 +599,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < grid.x / 16; i++) gpu_sum += h_odata[i];
 
     // kernel 8: reduceUnrollWarps8
-    CHECK(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
+    /*CHECK(cudaMemcpy(d_idata, h_idata, bytes, cudaMemcpyHostToDevice));
     CHECK(cudaDeviceSynchronize());
     iStart = seconds();
     reduceUnrollWarps8<<<grid.x / 8, block>>>(d_idata, d_odata, size);
@@ -671,7 +673,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < grid.x / 8; i++) gpu_sum += h_odata[i];
 
     printf("gpu Cmptnroll   elapsed %f sec gpu_sum: %d <<<grid %d block "
-           "%d>>>\n", iElaps, gpu_sum, grid.x / 8, block.x);
+           "%d>>>\n", iElaps, gpu_sum, grid.x / 8, block.x);*/
 
     // free host memory
     free(h_idata);
