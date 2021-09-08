@@ -10,6 +10,25 @@
  * are also demonstrated, such as unrolling.
  */
 
+// Recursive Implementation of Interleaved Pair Approach
+int recursiveReduce(int *data, int const size)
+{
+    // terminate check
+    if (size == 1) return data[0];
+
+    // renew the stride
+    int const stride = size / 2;
+
+    // in-place reduction
+    for (int i = 0; i < stride; i++)
+    {
+        data[i] += data[i + stride];
+    }
+
+    // call recursively
+    return recursiveReduce(data, stride);
+}
+
 // Neighbored Pair Implementation with divergence
 __global__ void reduceNeighbored (int *g_idata, int *g_odata, unsigned int n)
 {
