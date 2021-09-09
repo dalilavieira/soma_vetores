@@ -398,9 +398,15 @@ int main(int argc, char **argv)
     iElaps = seconds() - iStart;
     CHECK(cudaMemcpy(h_odata, d_odata, grid.x * sizeof(int),
                      cudaMemcpyDeviceToHost));
-    gpu_sum = 0;
+                     
+    gpu_sum = h_odata[0];
 
-    for (int i = 0; i < grid.x; i++) gpu_sum += h_odata[i];
+    for (int i = 0; i < grid.x / 8; i++) 
+    	if (gpu_sum > h_odata[i]) gpu_sum = h_odata[i];
+
+
+    //for (int i = 0; i < grid.x; i++) gpu_sum += h_odata[i];
+    gpu_sum = h_data[0];
 
     printf("gpu Neighbored  elapsed %f sec gpu_sum: %d <<<grid %d block "
            "%d>>>\n", iElaps, gpu_sum, grid.x, block.x);
@@ -430,9 +436,11 @@ int main(int argc, char **argv)
     iElaps = seconds() - iStart;
     CHECK(cudaMemcpy(h_odata, d_odata, grid.x * sizeof(int),
                      cudaMemcpyDeviceToHost));
-    gpu_sum = 0;
 
-    for (int i = 0; i < grid.x; i++) gpu_sum += h_odata[i];
+    gpu_sum = h_odata[0];
+
+    for (int i = 0; i < grid.x / 8; i++) 
+    	if (gpu_sum > h_odata[i]) gpu_sum = h_odata[i];
 
     printf("gpu Interleaved elapsed %f sec gpu_sum: %d <<<grid %d block "
            "%d>>>\n", iElaps, gpu_sum, grid.x, block.x);
@@ -478,9 +486,11 @@ int main(int argc, char **argv)
     iElaps = seconds() - iStart;
     CHECK(cudaMemcpy(h_odata, d_odata, grid.x / 8 * sizeof(int),
                      cudaMemcpyDeviceToHost));
-    gpu_sum = 0;
+                     
+    gpu_sum = h_odata[0];
 
-    for (int i = 0; i < grid.x / 8; i++) gpu_sum += h_odata[i];
+    for (int i = 0; i < grid.x / 8; i++) 
+    	if (gpu_sum > h_odata[i]) gpu_sum = h_odata[i];
 
     printf("gpu Unrolling8  elapsed %f sec gpu_sum: %d <<<grid %d block "
            "%d>>>\n", iElaps, gpu_sum, grid.x / 8, block.x);
